@@ -1,1 +1,1311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <title>SNACK · Pedidos</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f6fb;
+      color: #172033;
+    }
+
+    .topbar {
+      background: #ffffff;
+      border-bottom: 1px solid #e4e7ef;
+      padding: 18px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .topbar-inner {
+      max-width: 1200px;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #4f46e5;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .brand-title {
+      font-size: 21px;
+      font-weight: 800;
+    }
+
+    .brand-subtitle {
+      color: #727b8e;
+      font-size: 13px;
+      margin-top: 3px;
+    }
+
+    .department {
+      background: #eef0ff;
+      color: #4f46e5;
+      padding: 9px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 0 20px 40px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 350px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid #e5e8ef;
+      border-radius: 18px;
+      box-shadow: 0 4px 16px rgba(20, 30, 55, 0.04);
+    }
+
+    .catalog-card {
+      padding: 22px;
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin: 0 0 5px;
+    }
+
+    .section-subtitle {
+      color: #778095;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .search {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid #dce1ea;
+      border-radius: 12px;
+      font-size: 15px;
+      outline: none;
+      margin-bottom: 18px;
+    }
+
+    .search:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99,102,241,.10);
+    }
+
+    .status {
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: #f5f7fb;
+      color: #697287;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    .status.success {
+      background: #ecfdf5;
+      color: #047857;
+    }
+
+    .status.error {
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    .catalog {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .article {
+      display: grid;
+      grid-template-columns: 90px minmax(0, 1fr) 120px;
+      align-items: center;
+      gap: 14px;
+      padding: 13px 12px;
+      border: 1px solid #edf0f5;
+      border-radius: 12px;
+      transition: .15s;
+    }
+
+    .article:hover {
+      border-color: #cfd4ff;
+      background: #fafaff;
+    }
+
+    .article-id {
+      color: #6f7788;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .article-name {
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .article-category {
+      color: #8a92a3;
+      font-size: 11px;
+      margin-top: 3px;
+    }
+
+    .quantity-control {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 7px;
+    }
+
+    .qty-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid #d9deea;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .qty-btn:hover {
+      background: #f2f3ff;
+      border-color: #bfc3ff;
+    }
+
+    .qty-value {
+      min-width: 28px;
+      text-align: center;
+      font-weight: 800;
+    }
+
+    .cart-card {
+      padding: 20px;
+      position: sticky;
+      top: 95px;
+    }
+
+    .cart-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .cart-subtitle {
+      color: #7b8394;
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+
+    .cart-empty {
+      padding: 30px 10px;
+      text-align: center;
+      color: #8991a1;
+      font-size: 14px;
+      border: 1px dashed #dce1ea;
+      border-radius: 12px;
+    }
+
+    .cart-items {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      margin-bottom: 18px;
+    }
+
+    .cart-item {
+      padding: 11px 12px;
+      background: #f7f8fc;
+      border-radius: 10px;
+    }
+
+    .cart-item-name {
+      font-weight: 700;
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .cart-item-bottom {
+      margin-top: 5px;
+      display: flex;
+      justify-content: space-between;
+      color: #727b8e;
+      font-size: 12px;
+    }
+
+    .cart-total {
+      border-top: 1px solid #e5e8ef;
+      padding-top: 15px;
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      font-weight: 800;
+      font-size: 15px;
+    }
+
+    .send-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      padding: 15px;
+      background: #4f46e5;
+      color: white;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 16px;
+    }
+
+    .send-btn:hover {
+      background: #4338ca;
+    }
+
+    .send-btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    .clear-btn {
+      width: 100%;
+      margin-top: 9px;
+      padding: 11px;
+      border: 1px solid #dfe3eb;
+      background: white;
+      color: #667085;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, .45);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      width: 100%;
+      max-width: 440px;
+      border-radius: 18px;
+      padding: 25px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    }
+
+    .modal h2 {
+      margin-top: 0;
+    }
+
+    .modal p {
+      color: #667085;
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .cancel-modal {
+      border: 1px solid #dce1ea;
+      background: white;
+    }
+
+    .confirm-modal {
+      border: 0;
+      background: #4f46e5;
+      color: white;
+    }
+
+    @media (max-width: 850px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .cart-card {
+        position: static;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .topbar {
+        padding: 14px;
+      }
+
+      .container {
+        padding: 0 12px 30px;
+      }
+
+      .article {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .quantity-control {
+        justify-content: flex-start;
+      }
+
+      .department {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+
+      <div class="brand">
+        <div class="brand-icon">S</div>
+
+        <div>
+          <div class="brand-title">SNACK</div>
+          <div class="brand-subtitle">
+            Pedido interno al Economato
+          </div>
+        </div>
+      </div>
+
+      <div class="department">
+        SNACK LA MAREA
+      </div>
+
+    </div>
+  </header>
+
+
+  <main class="container">
+
+    <div class="layout">
+
+      <!-- CATÁLOGO -->
+      <section class="card catalog-card">
+
+        <h1 class="section-title">
+          Hacer pedido
+        </h1>
+
+        <div class="section-subtitle">
+          Selecciona los artículos y las cantidades que necesitas.
+        </div>
+
+        <input
+          id="searchInput"
+          class="search"
+          type="text"
+          placeholder="Buscar artículo..."
+          autocomplete="off"
+        >
+
+        <div id="status" class="status">
+          Cargando catálogo de SNACK...
+        </div>
+
+        <div id="catalog" class="catalog"></div>
+
+      </section>
+
+
+      <!-- PEDIDO -->
+      <aside class="card cart-card">
+
+        <div class="cart-title">
+          Mi pedido
+        </div>
+
+        <div class="cart-subtitle">
+          SNACK LA MAREA
+        </div>
+
+        <div id="cartItems" class="cart-items">
+          <div class="cart-empty">
+            Todavía no has añadido ningún artículo.
+          </div>
+        </div>
+
+        <div class="cart-total">
+          <span>Total artículos</span>
+          <span id="cartTotal">0</span>
+        </div>
+
+        <button
+          id="sendButton"
+          class="send-btn"
+          disabled
+          onclick="openConfirmation()"
+        >
+          ENVIAR PEDIDO
+        </button>
+
+        <button
+          class="clear-btn"
+          onclick="clearCart()"
+        >
+          Vaciar pedido
+        </button>
+
+      </aside>
+
+    </div>
+
+  </main>
+
+
+  <!-- CONFIRMACIÓN -->
+  <div id="modalBackdrop" class="modal-backdrop">
+
+    <div class="modal">
+
+      <h2>Confirmar pedido</h2>
+
+      <p>
+        Vas a enviar el pedido de SNACK al Economato.
+      </p>
+
+      <p>
+        <strong id="confirmationTotal">0</strong>
+        artículos seleccionados.
+      </p>
+
+      <div class="modal-actions">
+
+        <button
+          class="cancel-modal"
+          onclick="closeConfirmation()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          class="confirm-modal"
+          onclick="sendOrder()"
+        >
+          Confirmar y enviar
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+<script>
+
+  /*
+   * ============================================================
+   * CONFIGURACIÓN
+   * ============================================================
+   */
+
+  const BACKEND_URL =
+    'https://script.google.com/macros/s/AKfycbxn3r8myJMkDQ3mxbH0xlrPHkY36RQyy1kfwGe0Jp7iodznHti_5Xy2C70nMjBzpAI/exec';
+
+  const DEPARTAMENTO =
+    'SNACK LA MAREA';
+
+
+  /*
+   * ============================================================
+   * ESTADO
+   * ============================================================
+   */
+
+  let catalogo = [];
+
+  const carrito = new Map();
+
+
+  /*
+   * ============================================================
+   * ELEMENTOS
+   * ============================================================
+   */
+
+  const catalogElement =
+    document.getElementById('catalog');
+
+  const searchInput =
+    document.getElementById('searchInput');
+
+  const statusElement =
+    document.getElementById('status');
+
+  const cartItemsElement =
+    document.getElementById('cartItems');
+
+  const cartTotalElement =
+    document.getElementById('cartTotal');
+
+  const sendButton =
+    document.getElementById('sendButton');
+
+  const modalBackdrop =
+    document.getElementById('modalBackdrop');
+
+  const confirmationTotal =
+    document.getElementById('confirmationTotal');
+
+
+  /*
+   * ============================================================
+   * INICIO
+   * ============================================================
+   */
+
+  document.addEventListener(
+    'DOMContentLoaded',
+    function() {
+
+      searchInput.addEventListener(
+        'input',
+        renderCatalog
+      );
+
+      cargarCatalogo();
+
+    }
+  );
+
+
+  /*
+   * ============================================================
+   * CARGAR CATÁLOGO
+   * ============================================================
+   */
+
+  async function cargarCatalogo() {
+
+    setStatus(
+      'Cargando catálogo de SNACK...',
+      ''
+    );
+
+    try {
+
+      const url =
+        BACKEND_URL +
+        '?accion=catalogo' +
+        '&departamento=' +
+        encodeURIComponent(DEPARTAMENTO);
+
+      const response =
+        await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(
+          'HTTP ' + response.status
+        );
+      }
+
+      const data =
+        await response.json();
+
+      /*
+       * Admitimos varias estructuras de respuesta
+       * para facilitar la conexión con el backend.
+       */
+
+      if (Array.isArray(data)) {
+
+        catalogo = data;
+
+      } else if (Array.isArray(data.catalogo)) {
+
+        catalogo = data.catalogo;
+
+      } else if (Array.isArray(data.articulos)) {
+
+        catalogo = data.articulos;
+
+      } else if (Array.isArray(data.data)) {
+
+        catalogo = data.data;
+
+      } else {
+
+        throw new Error(
+          'El backend no ha devuelto un catálogo válido.'
+        );
+
+      }
+
+      catalogo =
+        catalogo.map(normalizarArticulo)
+        .filter(
+          articulo =>
+            articulo.idArticulo &&
+            articulo.referencia
+        );
+
+      renderCatalog();
+
+      setStatus(
+        catalogo.length +
+        ' artículos disponibles.',
+        'success'
+      );
+
+    } catch (error) {
+
+      console.error(error);
+
+      setStatus(
+        'No se ha podido cargar el catálogo. ' +
+        'Revisa la conexión con el backend TRASPASOS.',
+        'error'
+      );
+
+    }
+
+  }
+
+
+  /*
+   * ============================================================
+   * NORMALIZAR ARTÍCULO
+   * ============================================================
+   */
+
+  function normalizarArticulo(item) {
+
+    return {
+
+      idArticulo:
+        String(
+          item.idArticulo ??
+          item.ID_ARTICULO ??
+          item.id ??
+          ''
+        ).trim(),
+
+      claveArticulo:
+        String(
+          item.claveArticulo ??
+          item.CLAVE_ARTICULO ??
+          item.clave ??
+          ''
+        ).trim(),
+
+      referencia:
+        String(
+          item.referencia ??
+          item.REFERENCIA ??
+          item.nombre ??
+          ''
+        ).trim(),
+
+      categoria:
+        String(
+          item.categoria ??
+          item.CATEGORIA ??
+          ''
+        ).trim(),
+
+      departamento:
+        String(
+          item.departamento ??
+          item.DEPARTAMENTO ??
+          DEPARTAMENTO
+        ).trim()
+
+    };
+
+  }
+
+
+  /*
+   * ============================================================
+   * MOSTRAR CATÁLOGO
+   * ============================================================
+   */
+
+  function renderCatalog() {
+
+    const search =
+      searchInput.value
+        .trim()
+        .toLowerCase();
+
+    const filtered =
+      catalogo.filter(
+        articulo => {
+
+          const texto =
+            (
+              articulo.idArticulo +
+              ' ' +
+              articulo.claveArticulo +
+              ' ' +
+              articulo.referencia +
+              ' ' +
+              articulo.categoria
+            ).toLowerCase();
+
+          return texto.includes(search);
+
+        }
+      );
+
+    catalogElement.innerHTML = '';
+
+    if (!filtered.length) {
+
+      catalogElement.innerHTML = `
+        <div class="cart-empty">
+          No se han encontrado artículos.
+        </div>
+      `;
+
+      return;
+    }
+
+    filtered.forEach(
+      articulo => {
+
+        const cantidad =
+          carrito.get(
+            articulo.idArticulo
+          ) || 0;
+
+        const articleElement =
+          document.createElement('div');
+
+        articleElement.className =
+          'article';
+
+        articleElement.innerHTML = `
+
+          <div class="article-id">
+            ${escapeHtml(articulo.idArticulo)}
+          </div>
+
+          <div>
+
+            <div class="article-name">
+              ${escapeHtml(articulo.referencia)}
+            </div>
+
+            <div class="article-category">
+              ${escapeHtml(articulo.categoria)}
+            </div>
+
+          </div>
+
+          <div class="quantity-control">
+
+            <button
+              class="qty-btn"
+              onclick="changeQuantity('${escapeJs(articulo.idArticulo)}', -1)"
+            >
+              −
+            </button>
+
+            <div class="qty-value">
+              ${cantidad}
+            </div>
+
+            <button
+              class="qty-btn"
+              onclick="changeQuantity('${escapeJs(articulo.idArticulo)}', 1)"
+            >
+              +
+            </button>
+
+          </div>
+
+        `;
+
+        catalogElement.appendChild(
+          articleElement
+        );
+
+      }
+    );
+
+  }
+
+
+  /*
+   * ============================================================
+   * CANTIDADES
+   * ============================================================
+   */
+
+  function changeQuantity(
+    idArticulo,
+    cambio
+  ) {
+
+    const articulo =
+      catalogo.find(
+        item =>
+          item.idArticulo === idArticulo
+      );
+
+    if (!articulo) {
+      return;
+    }
+
+    let cantidad =
+      carrito.get(idArticulo) || 0;
+
+    cantidad += cambio;
+
+    if (cantidad <= 0) {
+
+      carrito.delete(idArticulo);
+
+    } else {
+
+      carrito.set(
+        idArticulo,
+        cantidad
+      );
+
+    }
+
+    renderCatalog();
+    renderCart();
+
+  }
+
+
+  /*
+   * ============================================================
+   * CARRITO
+   * ============================================================
+   */
+
+  function renderCart() {
+
+    cartItemsElement.innerHTML = '';
+
+    let total = 0;
+
+    if (carrito.size === 0) {
+
+      cartItemsElement.innerHTML = `
+        <div class="cart-empty">
+          Todavía no has añadido ningún artículo.
+        </div>
+      `;
+
+    } else {
+
+      carrito.forEach(
+        (cantidad, idArticulo) => {
+
+          const articulo =
+            catalogo.find(
+              item =>
+                item.idArticulo === idArticulo
+            );
+
+          if (!articulo) {
+            return;
+          }
+
+          total += cantidad;
+
+          const element =
+            document.createElement('div');
+
+          element.className =
+            'cart-item';
+
+          element.innerHTML = `
+
+            <div class="cart-item-name">
+              ${escapeHtml(articulo.referencia)}
+            </div>
+
+            <div class="cart-item-bottom">
+
+              <span>
+                ID ${escapeHtml(articulo.idArticulo)}
+              </span>
+
+              <strong>
+                ${cantidad} ud.
+              </strong>
+
+            </div>
+
+          `;
+
+          cartItemsElement.appendChild(
+            element
+          );
+
+        }
+      );
+
+    }
+
+    cartTotalElement.textContent =
+      total;
+
+    sendButton.disabled =
+      carrito.size === 0;
+
+  }
+
+
+  /*
+   * ============================================================
+   * VACIAR
+   * ============================================================
+   */
+
+  function clearCart() {
+
+    carrito.clear();
+
+    renderCatalog();
+    renderCart();
+
+  }
+
+
+  /*
+   * ============================================================
+   * CONFIRMACIÓN
+   * ============================================================
+   */
+
+  function openConfirmation() {
+
+    let total = 0;
+
+    carrito.forEach(
+      cantidad => {
+        total += cantidad;
+      }
+    );
+
+    confirmationTotal.textContent =
+      total;
+
+    modalBackdrop.classList.add(
+      'show'
+    );
+
+  }
+
+
+  function closeConfirmation() {
+
+    modalBackdrop.classList.remove(
+      'show'
+    );
+
+  }
+
+
+  /*
+   * ============================================================
+   * ENVIAR PEDIDO
+   * ============================================================
+   */
+
+  async function sendOrder() {
+
+    if (carrito.size === 0) {
+      return;
+    }
+
+    const lineas = [];
+
+    carrito.forEach(
+      (cantidad, idArticulo) => {
+
+        const articulo =
+          catalogo.find(
+            item =>
+              item.idArticulo === idArticulo
+          );
+
+        if (!articulo) {
+          return;
+        }
+
+        lineas.push({
+
+          claveArticulo:
+            articulo.claveArticulo ||
+            (
+              articulo.idArticulo +
+              '|' +
+              articulo.referencia
+            ),
+
+          idArticulo:
+            articulo.idArticulo,
+
+          referencia:
+            articulo.referencia,
+
+          categoria:
+            articulo.categoria,
+
+          cantidad:
+            cantidad
+
+        });
+
+      }
+    );
+
+
+    const pedido = {
+
+      departamento:
+        DEPARTAMENTO,
+
+      fecha:
+        obtenerFechaLocal(),
+
+      hora:
+        obtenerHoraLocal(),
+
+      estado:
+        'PENDIENTE',
+
+      lineas:
+        lineas
+
+    };
+
+
+    try {
+
+      closeConfirmation();
+
+      sendButton.disabled = true;
+
+      sendButton.textContent =
+        'ENVIANDO...';
+
+
+      const response =
+        await fetch(
+          BACKEND_URL,
+          {
+
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'text/plain;charset=utf-8'
+            },
+
+            body:
+              JSON.stringify(pedido)
+
+          }
+        );
+
+
+      const result =
+        await response.json();
+
+
+      if (
+        result &&
+        (
+          result.ok === true ||
+          result.success === true
+        )
+      ) {
+
+        alert(
+          'Pedido enviado correctamente.' +
+          (
+            result.pedidoId
+              ? '\n\nPedido: ' +
+                result.pedidoId
+              : ''
+          )
+        );
+
+        clearCart();
+
+      } else {
+
+        throw new Error(
+          result?.error ||
+          result?.message ||
+          'El backend no ha confirmado el pedido.'
+        );
+
+      }
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert(
+        'No se ha podido enviar el pedido.\n\n' +
+        error.message
+      );
+
+    } finally {
+
+      sendButton.disabled =
+        carrito.size === 0;
+
+      sendButton.textContent =
+        'ENVIAR PEDIDO';
+
+    }
+
+  }
+
+
+  /*
+   * ============================================================
+   * FECHA / HORA
+   * ============================================================
+   */
+
+  function obtenerFechaLocal() {
+
+    const ahora =
+      new Date();
+
+    return ahora
+      .toISOString()
+      .slice(0, 10);
+
+  }
+
+
+  function obtenerHoraLocal() {
+
+    const ahora =
+      new Date();
+
+    return ahora
+      .toLocaleTimeString(
+        'es-ES',
+        {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        }
+      );
+
+  }
+
+
+  /*
+   * ============================================================
+   * STATUS
+   * ============================================================
+   */
+
+  function setStatus(
+    texto,
+    tipo
+  ) {
+
+    statusElement.textContent =
+      texto;
+
+    statusElement.className =
+      'status' +
+      (
+        tipo
+          ? ' ' + tipo
+          : ''
+      );
+
+  }
+
+
+  /*
+   * ============================================================
+   * SEGURIDAD HTML
+   * ============================================================
+   */
+
+  function escapeHtml(value) {
+
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+
+  }
+
+
+  function escapeJs(value) {
+
+    return String(value ?? '')
+      .replaceAll('\\', '\\\\')
+      .replaceAll("'", "\\'");
+
+  }
+
+</script>
+
+</body>
+</html>
