@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SNACK · Pedido al Economato</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f3f6fc;color:#1d2940}
+  .wrap{max-width:1400px;margin:0 auto;padding:28px 32px 60px}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+  .brand{display:flex;align-items:center;gap:18px}
+  .logo{width:62px;height:62px;border-radius:20px;background:#4567f5;color:white;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800}
+  h1{font-size:34px;margin:0 0 4px}
+  .subtitle{font-size:20px;color:#75829a}
+  .status{padding:11px 18px;border-radius:24px;background:#fff;border:1px solid #dbe2ef;color:#d52d35;font-weight:700}
+  .status.ok{color:#20834b}
+  .grid{display:grid;grid-template-columns:2fr 1fr;gap:24px}
+  .card{background:#fff;border:1px solid #dce3ef;border-radius:22px;overflow:hidden;box-shadow:0 8px 24px rgba(44,62,100,.04)}
+  .card-head{padding:22px 26px;border-bottom:1px solid #e5e9f1;display:flex;justify-content:space-between;align-items:center}
+  .card-head h2{margin:0;font-size:24px}
+  .count{color:#77849b;font-size:18px}
+  .search{padding:18px 24px;border-bottom:1px solid #e5e9f1}
+  input{width:100%;padding:16px 18px;border:1px solid #cfd8e8;border-radius:14px;font-size:18px;outline:none}
+  input:focus{border-color:#4567f5;box-shadow:0 0 0 3px rgba(69,103,245,.1)}
+  .catalog{min-height:430px;padding:16px 24px}
+  .item{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 8px;border-bottom:1px solid #edf0f5}
+  .item-name{font-weight:800;font-size:18px}
+  .item-ref{font-size:14px;color:#8490a5;margin-top:4px}
+  .item-cat{font-size:13px;color:#64718a;margin-top:3px}
+  .qty{display:flex;align-items:center;gap:10px}
+  button{border:0;border-radius:12px;cursor:pointer;font-weight:800}
+  .qty button{width:38px;height:38px;background:#eef2fb;color:#3654c7;font-size:21px}
+  .qty span{min-width:24px;text-align:center;font-size:18px;font-weight:800}
+  .empty,.error{padding:70px 20px;text-align:center;color:#74819a;font-size:18px}
+  .error small{display:block;margin-top:8px}
+  .order{min-height:570px;display:flex;flex-direction:column}
+  .order-lines{padding:14px 24px;flex:1}
+  .order-line{padding:14px 0;border-bottom:1px solid #edf0f5}
+  .line-top{display:flex;justify-content:space-between;gap:10px;font-weight:800}
+  .line-controls{display:flex;align-items:center;gap:10px;margin-top:10px}
+  .line-controls button{width:34px;height:34px;background:#eef2fb;color:#3654c7}
+  .total{padding:22px 24px;font-size:21px;font-weight:800;display:flex;justify-content:space-between}
+  .send{margin:0 24px 24px;padding:18px;background:#8fa7f5;color:white;font-size:18px;border-radius:14px}
+  .send:not(:disabled){background:#4567f5}
+  .send:disabled{cursor:not-allowed;opacity:.7}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}.wrap{padding:18px}.order{min-height:400px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">S</div>
+      <div><h1>SNACK</h1><div class="subtitle">Pedido al Economato</div></div>
+    </div>
+    <div id="status" class="status">Conectando...</div>
+  </header>
+
+  <div class="grid">
+    <section class="card">
+      <div class="card-head">
+        <h2>Artículos disponibles</h2>
+        <span id="catalogCount" class="count">0 artículos</span>
+      </div>
+      <div class="search">
+        <input id="search" type="search" placeholder="Buscar artículo o referencia..." autocomplete="off">
+      </div>
+      <div id="catalog" class="catalog">
+        <div class="empty">Cargando catálogo...</div>
+      </div>
+    </section>
+
+    <section class="card order">
+      <div class="card-head">
+        <h2>Mi pedido</h2>
+        <span id="orderCount" class="count">0 líneas</span>
+      </div>
+      <div id="orderLines" class="order-lines">
+        <div class="empty">Todavía no has añadido ningún artículo.</div>
+      </div>
+      <div class="total"><span>Total solicitado</span><span id="total">0</span></div>
+      <button id="send" class="send" disabled>ENVIAR PEDIDO</button>
+    </section>
+  </div>
+</div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxn3r8myJMkDQ3mxbH0xlrPHkY36RQyy1kfwGe0Jp7iodznHti_5Xy2C70nMjBzpAI/exec';
+const DEPARTAMENTO = 'SNACK';
+
+let catalog = [];
+const pedido = new Map();
+
+const $ = id => document.getElementById(id);
+
+function setStatus(text, ok=false){
+  $('status').textContent = text;
+  $('status').className = 'status' + (ok ? ' ok' : '');
+}
+
+function normalizarCatalogo(data){
+  let lista = data;
+  if (data && Array.isArray(data.articulos)) lista = data.articulos;
+  if (data && Array.isArray(data.catalogo)) lista = data.catalogo;
+  if (data && Array.isArray(data.data)) lista = data.data;
+  if (!Array.isArray(lista)) return [];
+
+  return lista.map((x,i)=>({
+    id: String(x.idArticulo ?? x.id ?? x.claveArticulo ?? ''),
+    referencia: String(x.referencia ?? x.nombre ?? ''),
+    nombre: String(x.nombre ?? x.referencia ?? ''),
+    categoria: String(x.categoria ?? ''),
+    claveArticulo: String(x.claveArticulo ?? x.idArticulo ?? x.id ?? ''),
+    _i:i
+  })).filter(x => x.id || x.referencia || x.nombre);
+}
+
+async function cargarCatalogo(){
+  setStatus('Conectando...');
+  try{
+    const url = API_URL + '?action=catalogoSnack&departamento=' + encodeURIComponent(DEPARTAMENTO);
+    const res = await fetch(url, {method:'GET', cache:'no-store'});
+    const text = await res.text();
+
+    let data;
+    try { data = JSON.parse(text); }
+    catch(e){ throw new Error('Respuesta no válida del backend'); }
+
+    if(data && data.ok === false){
+      throw new Error(data.error || data.mensaje || data.message || 'Acción no reconocida');
+    }
+
+    catalog = normalizarCatalogo(data);
+
+    if(!catalog.length){
+      throw new Error('El backend respondió, pero no devolvió artículos');
+    }
+
+    setStatus('Conectado', true);
+    renderCatalog();
+  }catch(err){
+    console.error(err);
+    setStatus('Error de conexión');
+    $('catalog').innerHTML =
+      '<div class="error"><strong>No se pudo cargar el catálogo.</strong><small>' +
+      escapeHtml(err.message) + '</small></div>';
+  }
+}
+
+function escapeHtml(v){
+  return String(v).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  }[c]));
+}
+
+function renderCatalog(){
+  const q = $('search').value.trim().toLowerCase();
+  const items = catalog.filter(x =>
+    (x.nombre+' '+x.referencia+' '+x.categoria+' '+x.id).toLowerCase().includes(q)
+  );
+
+  $('catalogCount').textContent = catalog.length + (catalog.length===1?' artículo':' artículos');
+
+  if(!items.length){
+    $('catalog').innerHTML = '<div class="empty">No hay artículos que coincidan.</div>';
+    return;
+  }
+
+  $('catalog').innerHTML = items.map(x=>{
+    const qty = pedido.get(x.id) || 0;
+    return `<div class="item">
+      <div>
+        <div class="item-name">${escapeHtml(x.nombre)}</div>
+        <div class="item-ref">${escapeHtml(x.referencia)}</div>
+        ${x.categoria ? `<div class="item-cat">${escapeHtml(x.categoria)}</div>` : ''}
+      </div>
+      <div class="qty">
+        <button onclick="cambiar('${escapeJs(x.id)}',-1)">−</button>
+        <span>${qty}</span>
+        <button onclick="cambiar('${escapeJs(x.id)}',1)">+</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escapeJs(v){
+  return String(v).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+}
+
+function cambiar(id, delta){
+  const actual = pedido.get(id) || 0;
+  const nuevo = Math.max(0, actual + delta);
+  if(nuevo===0) pedido.delete(id);
+  else pedido.set(id,nuevo);
+  renderCatalog();
+  renderPedido();
+}
+
+function renderPedido(){
+  const lines = [...pedido.entries()].map(([id,cantidad])=>{
+    const x = catalog.find(a=>a.id===id);
+    return x ? {x,cantidad} : null;
+  }).filter(Boolean);
+
+  const total = lines.reduce((s,l)=>s+l.cantidad,0);
+  $('orderCount').textContent = lines.length + (lines.length===1?' línea':' líneas');
+  $('total').textContent = total;
+  $('send').disabled = !lines.length;
+
+  if(!lines.length){
+    $('orderLines').innerHTML = '<div class="empty">Todavía no has añadido ningún artículo.</div>';
+    return;
+  }
+
+  $('orderLines').innerHTML = lines.map(({x,cantidad})=>`
+    <div class="order-line">
+      <div class="line-top">
+        <span>${escapeHtml(x.nombre)}</span>
+        <span>${cantidad}</span>
+      </div>
+      <div class="item-ref">${escapeHtml(x.referencia)}</div>
+      <div class="line-controls">
+        <button onclick="cambiar('${escapeJs(x.id)}',-1)">−</button>
+        <strong>${cantidad}</strong>
+        <button onclick="cambiar('${escapeJs(x.id)}',1)">+</button>
+      </div>
+    </div>`).join('');
+}
+
+async function enviarPedido(){
+  if(!pedido.size) return;
+
+  const lineas = [...pedido.entries()].map(([id,cantidad])=>{
+    const x = catalog.find(a=>a.id===id);
+    return {
+      claveArticulo: x?.claveArticulo || id,
+      idArticulo: x?.id || id,
+      referencia: x?.referencia || '',
+      nombre: x?.nombre || '',
+      categoria: x?.categoria || '',
+      cantidad
+    };
+  });
+
+  $('send').disabled = true;
+  $('send').textContent = 'ENVIANDO...';
+
+  try{
+    const params = new URLSearchParams({
+      action:'registrarPedidoWeb',
+      departamento:DEPARTAMENTO,
+      lineas:JSON.stringify(lineas)
+    });
+
+    const res = await fetch(API_URL + '?' + params.toString(), {
+      method:'GET',
+      cache:'no-store'
+    });
+    const data = await res.json();
+
+    if(!data || data.ok === false){
+      throw new Error(data?.error || data?.mensaje || 'No se pudo registrar el pedido');
+    }
+
+    alert('Pedido enviado correctamente' + (data.pedidoId ? '\\n\\nPedido: '+data.pedidoId : ''));
+    pedido.clear();
+    renderCatalog();
+    renderPedido();
+  }catch(err){
+    console.error(err);
+    alert('No se pudo enviar el pedido:\\n\\n' + err.message);
+  }finally{
+    $('send').disabled = !pedido.size;
+    $('send').textContent = 'ENVIAR PEDIDO';
+  }
+}
+
+$('search').addEventListener('input', renderCatalog);
+$('send').addEventListener('click', enviarPedido);
+
+cargarCatalogo();
+</script>
+</body>
+</html>
